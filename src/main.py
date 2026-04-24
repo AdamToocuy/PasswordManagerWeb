@@ -22,6 +22,8 @@ def index():
     # Получаем актуальный список валют из API при каждом (или первом) запросе
     items = get_currency_data()
     result = ""
+    selected_from = request.form.get('from_currency', 'USD')
+    selected_to = request.form.get('to_currency', 'RUB')
     
     if request.method == 'POST':
         amount = request.form.get('source_amount')
@@ -42,7 +44,10 @@ def index():
             except:
                 result = "Ошибка расчета"
 
-    return render_template('index.html', items=items, result=result)
-
+    return render_template('index.html', 
+                           items=items, 
+                           result=result, 
+                           selected_from=selected_from, 
+                           selected_to=selected_to)
 if __name__ == '__main__':
     app.run(port=8080, host='127.0.0.1', debug=True)

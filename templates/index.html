@@ -16,35 +16,44 @@
   <nav class="navbar navbar-expand-lg bg-body-tertiary">
     <div class="container-fluid">
       <a class="navbar-brand" href="#">ExchangeRate</a>
-      <!-- ... кнопка навигации ... -->
+      <!-- ... кнопка бургера (без изменений) ... -->
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"></li>
+          <li class="nav-item"><a class="nav-link" href="#">Конвертер валют</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Курс валют</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Банки </a></li>
+        </ul>
+      </div>
     </div>
   </nav>
 
   <div class="container mt-4">
     <form method="POST">
   <div class="input-group mb-3">
-    <!-- Кнопка отправки формы -->
     <button type="submit" class="btn btn-outline-secondary">Перевести</button>
     
-    <!-- Выпадающий список БАЗОВОЙ валюты -->
     <select name="from_currency" class="btn btn-outline-secondary">
       {% for item in items %}
-      <option value="{{ item }}" {% if item == 'RUB' %}selected{% endif %}>{{ item }}</option>
+      <option value="{{ item }}" {% if item == selected_from %}selected{% endif %}>
+        {{ item }}
+      </option>
       {% endfor %}
     </select>
 
-    <!-- Поле ввода суммы -->
-    <input type="number" step="0.01" name="source_amount" class="form-control" placeholder="Сумма" required>
+    <!-- Сохраняем введенную сумму в атрибуте value -->
+    <input type="number" step="0.01" name="source_amount" class="form-control" 
+           value="{{ request.form.get('source_amount', '') }}" placeholder="Сумма" required>
   </div>
 
   <div class="input-group">
-    <!-- Поле вывода результата (заполняется из Python) -->
     <input type="text" class="form-control" value="{{ result }}" readonly placeholder="Результат">
     
-    <!-- Выпадающий список ЦЕЛЕВОЙ валюты -->
     <select name="to_currency" class="btn btn-outline-secondary">
       {% for item in items %}
-      <option value="{{ item }}" {% if item == 'USD' %}selected{% endif %}>{{ item }}</option>
+      <option value="{{ item }}" {% if item == selected_to %}selected{% endif %}>
+        {{ item }}
+      </option>
       {% endfor %}
     </select>
   </div>
