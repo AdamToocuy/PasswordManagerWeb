@@ -1,52 +1,30 @@
-from flask import Flask, render_template, request
-import requests
+import os
+from flask import Flask, render_template
 
+# Импортируем логику из созданных вами файлов
+from converter import process_converter
+from exchange_rates import process_exchange_dashboard
+from get_exchange import get_currency_data
+
+# Создаем приложение
 app = Flask(__name__, template_folder="../templates")
 
-# URL для получения списка валют и курсов (база USD для получения всех кодов)
-API_URL = "https://open.er-api.com/v6/latest/USD"
-
-def get_currency_data():
-    try:
-        response = requests.get(API_URL, timeout=5)
-        if response.status_code == 200:
-            data = response.json()
-            # Извлекаем только коды валют из ключей словаря 'rates'
-            return sorted(data.get("rates", {}).keys())
-    except Exception as e:
-        print(f"Ошибка при загрузке валют: {e}")
-
+@app.route('/index.html', methods=['GET', 'POST'])
 @app.route('/', methods=['GET', 'POST'])
-def index():
-    # Получаем актуальный список валют из API при каждом (или первом) запросе
+def converter_page():
+    # Запрашиваем список валют из get_exchange.py
     items = get_currency_data()
-    result = ""
-    selected_from = request.form.get('from_currency', 'USD')
-    selected_to = request.form.get('to_currency', 'RUB')
-    
-    if request.method == 'POST':
-        amount = request.form.get('source_amount')
-        from_v = request.form.get('from_currency')
-        to_v = request.form.get('to_currency')
-        
-        if amount and from_v and to_v:
-            try:
-                # Запрашиваем курс относительно выбранной базовой валюты
-                conv_url = f"https://open.er-api.com/v6/latest/{from_v}"
-                resp = requests.get(conv_url)
-                conv_data = resp.json()
-                rate = conv_data["rates"].get(to_v)
-                
-                if rate:
-                    res_val = float(amount) * rate
-                    result = f"{res_val:.2f}"
-            except:
-                result = "Ошибка расчета"
+    # Вызываем логику конвертера из converter.py
+    context = process_converter()
+    return render_template('converter.html', items=items, **context)
 
-    return render_template('exchange.html', 
-                           items=items, 
-                           result=result, 
-                           selected_from=selected_from, 
-                           selected_to=selected_to)
+@app.route('/exchange.html', methods=['GET'])
+def exchange_page():
+    # Вызываем логику дашборда из exchange_rates.py
+    context = process_exchange_dashboard()
+    return render_template('exchange_rates.html', **context)
+
 if __name__ == '__main__':
+    print("=== Запуск единого сервера курсов валют ===")
+    print("Адрес: http://127.0.0.1:8080")
     app.run(port=8080, host='127.0.0.1', debug=True)
