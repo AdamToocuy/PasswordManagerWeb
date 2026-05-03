@@ -15,7 +15,6 @@ def get_currency_data():
             return sorted(data.get("rates", {}).keys())
     except Exception as e:
         print(f"Ошибка при загрузке валют: {e}")
-    return ["USD", "EUR", "RUB"] # Запасной список
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -44,7 +43,7 @@ def index():
             except:
                 result = "Ошибка расчета"
 
-    return render_template('index.html', 
+    return render_template('exchange.html', 
                            items=items, 
                            result=result, 
                            selected_from=selected_from, 
