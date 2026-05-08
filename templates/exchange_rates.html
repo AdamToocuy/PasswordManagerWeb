@@ -1,215 +1,150 @@
 <!DOCTYPE html>
-<html lang="ru" dir="rtl" data-bs-theme="dark">
+<html lang="ru" dir="{{ 'rtl' if is_rtl else 'ltr' }}" data-bs-theme="dark">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Дашборд курсов валют</title>
-  
-  <!-- Подключаем Bootstrap 5.3 -->
-  <link href="https://jsdelivr.net" rel="stylesheet">
-  <!-- Подключаем ApexCharts -->
-  <script src="https://jsdelivr.net"></script>
+  <title>Курс валют — ExchangeRate</title>
 
-  <style>
-    /* Небольшие кастомные фиксы для фиксации меню и высоты */
-    body {
-      padding-top: 56px; /* Отступ под фиксированную шапку */
-    }
-    .sidebar {
-      width: 250px;
-      position: fixed;
-      top: 56px;
-      bottom: 0;
-      right: 0; /* right для RTL */
-      z-index: 1000;
-      border-left: 1px solid #334155; /* border-left для RTL */
-    }
-    .main-content {
-      margin-right: 250px; /* margin-right для RTL */
-    }
-    /* Прячем сайдбар на мобильных */
-    @media (max-width: 992px) {
-      .sidebar { display: none !important; }
-      .main-content { margin-right: 0 !important; }
-    }
-    /* Для чисел всегда используем направление слева направо */
-    .card-value {
-      direction: ltr;
-      text-align: right;
-    }
-  </style>
+  {% if is_rtl %}
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  {% else %}
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+    integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+    crossorigin="anonymous" rel="stylesheet">
+  {% endif %}
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+    crossorigin="anonymous"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 </head>
 
-<body class="bg-body-tertiary">
+<body>
 
-  <!-- ВЕРХНЯЯ ШАПКА BOOTSTRAP -->
-  <nav class="navbar navbar-expand-lg fixed-top bg-dark border-bottom border-secondary-subtle">
+  <!-- Шапка — такая же, как в конвертере -->
+  <nav class="navbar navbar-expand-lg bg-body-tertiary">
     <div class="container-fluid">
-      <a class="navbar-brand fw-bold text-info" href="#">ExchangeRate</a>
-      
-      <!-- Бургер меню -->
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <a class="navbar-brand" href="#">ExchangeRate</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
         <span class="navbar-toggler-icon"></span>
       </button>
-      
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item">
-            <a class="nav-link" href="/index.html">Конвертер валют</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link active fw-bold text-info" href="/exchange.html">Курс валют</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">Банки</a>
-          </li>
+          <li class="nav-item"><a class="nav-link" href="/index.html">Конвертер валют</a></li>
+          <li class="nav-item"><a class="nav-link active fw-semibold" href="/exchange.html">Курс валют</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Банки</a></li>
         </ul>
+        <!-- Бейдж RTL-режима — показывается только когда активен -->
+        {% if is_rtl %}
+        <span class="badge bg-secondary me-2">RTL</span>
+        {% endif %}
       </div>
     </div>
   </nav>
 
-  <!-- БОКОВОЕ МЕНЮ -->
-  <aside class="sidebar bg-dark p-3 d-flex flex-column">
-    <nav class="nav nav-pills flex-column">
-      <a href="#" class="nav-link active bg-secondary text-white mb-2">Панель управления</a>
-      <a href="#" class="nav-link text-secondary mb-2">Аналитика</a>
-      <a href="#" class="nav-link text-secondary">Настройки</a>
-    </nav>
-  </aside>
+  <div class="container mt-4">
 
-  <!-- ГЛАВНЫЙ КОНТЕНТ -->
-  <main class="main-content p-4 d-flex flex-column gap-4">
+    <!-- Фильтры: валюты + период + RTL -->
+    <form method="GET" action="">
+      <div class="input-group mb-3">
+
+        <span class="input-group-text">Базовая</span>
+        <select name="base_currency" class="form-select" onchange="this.form.submit()">
+          {% for item in items %}
+          <option value="{{ item }}" {% if item == selected_base %}selected{% endif %}>{{ item }}</option>
+          {% endfor %}
+        </select>
+
+        <span class="input-group-text">Целевая</span>
+        <select name="target_currency" class="form-select" onchange="this.form.submit()">
+          {% for item in items %}
+          <option value="{{ item }}" {% if item == selected_target %}selected{% endif %}>{{ item }}</option>
+          {% endfor %}
+        </select>
+
+        <span class="input-group-text">Период</span>
+        <select name="period" class="form-select" onchange="this.form.submit()">
+          <option value="1mo"  {% if selected_period == '1mo'  %}selected{% endif %}>1 месяц</option>
+          <option value="6mo"  {% if selected_period == '6mo'  %}selected{% endif %}>6 месяцев</option>
+          <option value="1y"   {% if selected_period == '1y'   %}selected{% endif %}>1 год</option>
+          <option value="5y"   {% if selected_period == '5y'   %}selected{% endif %}>5 лет</option>
+          <option value="10y"  {% if selected_period == '10y'  %}selected{% endif %}>10 лет</option>
+        </select>
+
+        <!-- Чекбокс ручного включения RTL -->
+        <div class="input-group-text">
+          <input class="form-check-input mt-0 me-1" type="checkbox" name="rtl" value="1"
+            {% if is_rtl %}checked{% endif %} onchange="this.form.submit()" id="rtlCheck">
+          <label class="form-check-label" for="rtlCheck">RTL</label>
+        </div>
+
+      </div>
+    </form>
+
+        <!-- Карточки-метрики — порядок управляется dashboard.cards из Python -->
+        <!-- Карточки-метрики -->
+        <div class="row g-3 mb-3 {{ 'text-end' if is_rtl else '' }}">
     
-    <!-- Заголовок -->
-    <header class="d-flex justify-content-between align-items-center">
-      <h1 class="h3 fw-bold m-0">Мониторинг курсов валют</h1>
-      <small class="text-secondary">Обновлено: Сегодня</small>
-    </header>
-
-    <!-- ФИЛЬТРЫ ВЫБОРА ВАЛЮТ -->
-    <section class="card bg-dark border-secondary-subtle shadow-sm p-3">
-      <div class="row g-3 align-items-end">
-        
-        <!-- Базовая валюта -->
-        <div class="col-12 col-md-6">
-          <label for="base-currency" class="form-label text-secondary small">Базовая валюта (Base)</label>
-          <select id="base-currency" class="form-select bg-body-tertiary border-secondary" onchange="updateURL()">
-            {% for item in items %}
-            <option value="{{ item }}" {% if item == selected_base %}selected{% endif %}>{{ item }} — Доллар США</option>
-            {% endfor %}
-          </select>
+    {% if dashboard is defined and dashboard.cards %}
+        {% for card in dashboard.cards %}
+        <div class="col-md-4">
+            <div class="bg-body-tertiary rounded-2 p-3">
+            <div class="text-body-secondary small mb-1">{{ card.title }}</div>
+            <div class="fs-3 fw-semibold {{ card.color }}">{{ card.value }}</div>
+            {% if card.badge %}
+                <div class="{{ card.badge_color }} small mt-1">{{ card.badge }}</div>
+            {% endif %}
+            </div>
         </div>
-
-        <!-- Целевая валюта -->
-        <div class="col-12 col-md-6">
-          <label for="target-currency" class="form-label text-secondary small">Целевая валюта (Target)</label>
-          <select id="target-currency" class="form-select bg-body-tertiary border-secondary" onchange="updateURL()">
-            {% for item in items %}
-            <option value="{{ item }}" {% if item == selected_target %}selected{% endif %}>{{ item }} — Евро</option>
-            {% endfor %}
-          </select>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- СЕТКА ДАШБОРДА -->
-    <div class="row g-4">
-      
-      <!-- Карточка 1 -->
-      <div class="col-12 col-md-6 col-lg-4">
-        <div class="card bg-dark border-secondary-subtle shadow-sm p-3 h-100 d-flex flex-column justify-content-between">
-          <span class="text-secondary small">Текущий курс ({{ selected_base }} / {{ selected_target }})</span>
-          <div class="display-6 fw-bold card-value my-2">{{ current_rate }}</div>
-          <div class="text-success small d-flex align-items-center gap-1">
-            <span>▲ +0.23%</span>
-            <span>за сегодня</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Карточка 2 -->
-      <div class="col-12 col-md-6 col-lg-4">
-        <div class="card bg-dark border-secondary-subtle shadow-sm p-3 h-100 d-flex flex-column justify-content-between">
-          <span class="text-secondary small">Максимум сегодня</span>
-          <div class="display-6 fw-bold card-value my-2">{{ high_rate }}</div>
-          <small class="text-secondary">Пик за 24ч</small>
-        </div>
-      </div>
-
-      <!-- Карточка 3 -->
-      <div class="col-12 col-md-6 col-lg-4">
-        <div class="card bg-dark border-secondary-subtle shadow-sm p-3 h-100 d-flex flex-column justify-content-between">
-          <span class="text-secondary small">Минимум сегодня</span>
-          <div class="display-6 fw-bold card-value my-2">{{ low_rate }}</div>
-          <small class="text-secondary">Минимум за 24ч</small>
-        </div>
-      </div>
-
-      <!-- Карточка графика -->
-      <div class="col-12">
-        <div class="card bg-dark border-secondary-subtle shadow-sm p-3">
-          <div class="fw-bold mb-3">История движения курса</div>
-          <div id="chart"></div>
-        </div>
-      </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12 text-muted">Нет данных</div>
+    {% endif %}
 
     </div>
-  </main>
 
-  <!-- JS Bootstrap 5 -->
-  <script src="https://jsdelivr.net"></script>
-
-  <!-- Настройки графиков и логики -->
   <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      const chartOptions = {
-        series: [{
-          name: 'Курс',
-          data: {{ chart_data | tojson }}
-        }],
+    document.addEventListener("DOMContentLoaded", function () {
+      const chartData = {{ chart_data | tojson }};
+      const isRtl = {{ 'true' if is_rtl else 'false' }};
+
+      new ApexCharts(document.querySelector("#chart"), {
+        series: [{ name: 'Курс', data: chartData }],
         chart: {
           type: 'area',
-          height: 300,
-          rtl: true, // Включаем RTL для графика
-          foreColor: '#94a3b8',
-          toolbar: { show: false }
+          height: 320,
+          toolbar: { show: true },
+          background: 'transparent'
         },
-        colors: ['#0dcaf0'], // Цвет графика Bootstrap Info
+        colors: ['#38bdf8'],
+        fill: {
+          type: 'gradient',
+          gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 100] }
+        },
         dataLabels: { enabled: false },
         stroke: { curve: 'smooth', width: 2 },
         xaxis: {
-          categories: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
+          type: 'datetime',
+          labels: { style: { colors: '#94a3b8' } },
+          axisBorder: { show: false },
+          axisTicks: { show: false },
+          tooltip: { enabled: false }
         },
-        fill: {
-          type: 'gradient',
-          gradient: {
-            shadeIntensity: 1, 
-            opacityFrom: 0.4, 
-            opacityTo: 0.05, 
-            stops: [0, 90, 100]
+        yaxis: {
+          opposite: isRtl,
+          labels: {
+            style: { colors: '#94a3b8' },
+            formatter: v => v.toFixed(4)
           }
         },
-        tooltip: {
-          theme: 'dark'
-        },
-        grid: {
-          borderColor: '#334155'
-        }
-      };
-
-      const chart = new ApexCharts(document.querySelector("#chart"), chartOptions);
-      chart.render();
+        tooltip: { theme: 'dark', x: { format: 'dd MMM yyyy' } },
+        grid: { borderColor: '#334155', strokeDashArray: 4 },
+        theme: { mode: 'dark' }
+      }).render();
     });
-
-    // Функция обновления URL при смене селектора валют
-    function updateURL() {
-      const base = document.getElementById('base-currency').value;
-      const target = document.getElementById('target-currency').value;
-      window.location.href = `/exchange.html?base_currency=${base}&target_currency=${target}`;
-    }
   </script>
-</body>
 
+</body>
 </html>

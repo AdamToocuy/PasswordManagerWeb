@@ -1,62 +1,48 @@
-from flask import request
-# Импортируем функцию запроса данных из вашего файла
-from get_exchange import get_currency_data
-import requests
+from flask import Flask, render_template, request
+from get_exchange import process_exchange_dashboard
 
-def process_exchange_dashboard():
-    """
-    Получает данные из API и готовит контекст для дашборда exchange_rates.html.
-    Поддерживает RTL-логику отображения.
-    """
-    # 1. Получаем список всех валют для выпадающих списков
-    items = get_currency_data()
-    
-    # 2. Получаем выбранные пользователем валюты (по умолчанию USD и EUR)
-    selected_base = request.args.get('base_currency', 'USD')
-    selected_target = request.args.get('target_currency', 'EUR')
-    
-    # Значения по умолчанию для карточек
-    current_rate = "1.0000"
-    high_rate = "1.0000"
-    low_rate = "1.0000"
-    chart_data = [1.0] * 7
-    
-    # 3. Получаем реальный курс через API для выбранной базовой валюты
-    try:
-        url = f"https://er-api.com{selected_base}"
-        resp = requests.get(url, timeout=5)
-        if resp.status_code == 200:
-            data = resp.json()
-            rates = data.get("rates", {})
-            
-            rate = rates.get(selected_target)
-            if rate:
-                current_rate = f"{rate:.4f}"
-                # Имитируем небольшие колебания для карточек Максимум/Минимум за 24ч
-                high_rate = f"{(rate * 1.005):.4f}"
-                low_rate = f"{(rate * 0.995):.4f}"
-                
-                # Генерируем псевдо-исторические данные для графика за 7 дней
-                chart_data = [
-                    round(rate * 0.996, 4),
-                    round(rate * 1.002, 4),
-                    round(rate * 0.991, 4),
-                    round(rate * 1.005, 4),
-                    round(rate * 0.998, 4),
-                    round(rate * 1.003, 4),
-                    round(rate, 4)
-                ]
-    except Exception as e:
-        print(f"Ошибка при расчете дашборда: {e}")
-        current_rate = "Ошибка"
+app = Flask(__name__)
 
-    # Возвращаем словарь с переменными для Jinja2 в шаблоне
-    return {
-        "items": items,
-        "selected_base": selected_base,
-        "selected_target": selected_target,
-        "current_rate": current_rate,
-        "high_rate": high_rate,
-        "low_rate": low_rate,
-        "chart_data": chart_data
-    }
+# 1. ОПРЕДЕЛИТЕ СПИСОК ВАЛЮТ (замените на свои, если нужно)
+RTL_CURRENCIES = ["AED", "SAR", "KWD", "OMR", "BHD", "QAR"]
+
+@app.route("/exchange_rates.html", methods=["GET"])
+def exchange_page():
+    # 1. Получаем данные
+    context = process_exchange_dashboard()
+
+    # 2. Логика RTL
+    is_rtl = (
+        context.get("selected_base") in RTL_CURRENCIES or
+        request.args.get("rtl") == "1"
+    )
+
+    # 3. Генерируем дашборд
+    dashboard_data = build_rtl_dashboard(context, is_rtl)
+
+    # 4. ЯВНО добавляем переменные в context
+    context["is_rtl"] = is_rtl
+    context["dashboard"] = dashboard_data 
+
+    # 5. Вывод для отладки (посмотрите в консоли терминала, что там реально лежит)
+    print("DEBUG CONTEXT KEYS:", context.keys())
+
+    return render_template('exchange_rates.html', **context)
+
+
+def build_rtl_dashboard(context, is_rtl):
+    # Создаем список карточек
+    cards =[
+        {"title": "Текущий курс", "value": context.get("current_rate"), "color": "text-info"},
+        {"title": "Максимум", "value": context.get("high_rate"), "color": "text-success"},
+        {"title": "Минимум", "value": context.get("low_rate"), "color": "text-danger"},
+    ]
+
+    # Если включен RTL, просто разворачиваем порядок карточек
+    if is_rtl:
+        cards.reverse() 
+
+    return {"cards": cards} # Возвращаем объект, у которого есть свойство cards
+
+if __name__ == "__main__":
+    app.run(debug=True)
