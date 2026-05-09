@@ -23,6 +23,9 @@ def exchange_page():
     # Вызываем логику дашборда из exchange_rates.py
     context = process_exchange_dashboard()
     return render_template('exchange_rates.html', **context)
+@app.route('/singin.html', methods=['GET', 'POST'])
+def singin_form():
+    return render_template('singin.html')
 
 if __name__ == '__main__':
     print("=== Запуск единого сервера курсов валют ===")
