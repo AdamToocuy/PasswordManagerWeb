@@ -2,96 +2,114 @@ from flask import request
 import requests
 from datetime import datetime, timedelta
 
-def get_currency_data():
-    """Получает список всех доступных кодов валют через er-api."""
-    try:
-        response = requests.get("https://open.er-api.com/v6/latest/USD", timeout=5)
-        if response.status_code == 200:
-            return sorted(response.json().get("rates", {}).keys())
-    except Exception as e:
-        print(f"Ошибка при загрузке валют: {e}")
-    return[]
+# Импортируем функции из вашего файла get_exchange.py
+from get_exchange import get_currency_codes, get_currency_data
 
 def process_exchange_dashboard():
     """Готовит данные для дашборда с курсами и историей."""
     
-    items = get_currency_data()
+    # 1. Получаем список ВСЕХ доступных валют через get_exchange.py
+    items = get_currency_codes()
     
+    # 2. Получаем параметры из формы (или задаем по умолчанию)
     selected_base = request.args.get('base_currency', 'USD')
     selected_target = request.args.get('target_currency', 'EUR')
-    selected_period = request.args.get('period', '1y') 
+    selected_period = request.args.get('period', '1mo')
+    is_rtl = request.args.get('rtl') == '1'
     
     current_rate = "Ошибка"
     high_rate = "-"
     low_rate = "-"
     chart_data =[]
 
-    if selected_base == selected_target:
-        return {
-            "items": items, "selected_base": selected_base, "selected_target": selected_target,
-            "selected_period": selected_period, "current_rate": "1.0000",
-            "high_rate": "1.0000", "low_rate": "1.0000", "chart_data":[]
-        }
+    # 3. Запрашиваем актуальные курсы через get_exchange.py
+    rates = get_currency_data(selected_base)
+    rate = rates.get(selected_target)
+    if rate:
+        current_rate = f"{rate:.4f}"
 
-    # --- ИЗБАВЛЯЕМСЯ ОТ IF/ELSE С ПОМОЩЬЮ СЛОВАРЯ ---
-    period_days = {
-        '1mo': 30,
-        '6mo': 180,
-        '1y': 365,
-        '5y': 5 * 365,
-        '10y': 10 * 365
+    # Если валюты одинаковые (например, USD в USD), график строить бессмысленно
+    if selected_base == selected_target:
+        current_rate = "1.0000"
+        high_rate = "1.0000"
+        low_rate = "1.0000"
+    else:
+        # --- ИЗБАВЛЯЕМСЯ ОТ IF/ELSE С ПОМОЩЬЮ СЛОВАРЯ ---
+        period_days = {
+            '1mo': 30,
+            '6mo': 180,
+            '1y': 365,
+            '5y': 5 * 365,
+            '10y': 10 * 365
+        }
+        days_to_subtract = period_days.get(selected_period, 30)
+        
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days_to_subtract)
+
+        start_str = start_date.strftime('%Y-%m-%d')
+        end_str = end_date.strftime('%Y-%m-%d')
+
+        # Запрашиваем историю для графика (через API Frankfurter)
+        try:
+            url_hist = f"https://api.frankfurter.app/{start_str}..{end_str}?from={selected_base}&to={selected_target}"
+            resp_hist = requests.get(url_hist, timeout=5)
+            
+            if resp_hist.status_code == 200:
+                rates_history = resp_hist.json().get("rates", {})
+                vals =[]
+                
+                for date_key, rate_dict in rates_history.items():
+                    hist_val = rate_dict.get(selected_target)
+                    if hist_val:
+                        dt_obj = datetime.strptime(date_key, "%Y-%m-%d")
+                        ts = int(dt_obj.timestamp() * 1000)
+                        chart_data.append([ts, round(hist_val, 4)])
+                        vals.append(hist_val)
+                        
+                if vals:
+                    high_rate = f"{max(vals):.4f}"
+                    low_rate = f"{min(vals):.4f}"
+            else:
+                print("Исторические данные недоступны для этой пары.")
+                
+        except Exception as e:
+            print(f"Ошибка при работе с API Frankfurter: {e}")
+
+    # 4. Строим тот самый DASHBOARD для вёрстки
+    dashboard = {
+        "cards":[
+            {
+                "title": f"Курс ({selected_base} → {selected_target})",
+                "value": current_rate,
+                "color": "text-primary",
+                "badge": "Сейчас",
+                "badge_color": "bg-primary"
+            },
+            {
+                "title": "Максимум за период",
+                "value": high_rate,
+                "color": "text-success",
+                "badge": "MAX",
+                "badge_color": "bg-success"
+            },
+            {
+                "title": "Минимум за период",
+                "value": low_rate,
+                "color": "text-danger",
+                "badge": "MIN",
+                "badge_color": "bg-danger"
+            }
+        ]
     }
 
-    # Получаем количество дней по ключу (если пришел кривой период, по умолчанию берем 365)
-    days_to_subtract = period_days.get(selected_period, 365)
-    
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=days_to_subtract)
-
-    start_str = start_date.strftime('%Y-%m-%d')
-    end_str = end_date.strftime('%Y-%m-%d')
-
-    try:
-        # Текущий курс
-        url_current = f"https://open.er-api.com/v6/latest/{selected_base}"
-        resp_curr = requests.get(url_current, timeout=5)
-        if resp_curr.status_code == 200:
-            rate = resp_curr.json().get("rates", {}).get(selected_target)
-            if rate:
-                current_rate = f"{rate:.4f}"
-
-        # История для графика
-        url_hist = f"https://api.frankfurter.app/{start_str}..{end_str}?from={selected_base}&to={selected_target}"
-        resp_hist = requests.get(url_hist, timeout=5)
-        
-        if resp_hist.status_code == 200:
-            rates_history = resp_hist.json().get("rates", {})
-            vals =[]
-            
-            for date_key, rate_dict in rates_history.items():
-                hist_val = rate_dict.get(selected_target)
-                if hist_val:
-                    dt_obj = datetime.strptime(date_key, "%Y-%m-%d")
-                    ts = int(dt_obj.timestamp() * 1000)
-                    chart_data.append([ts, round(hist_val, 4)])
-                    vals.append(hist_val)
-                    
-            if vals:
-                high_rate = f"{max(vals):.4f}"
-                low_rate = f"{min(vals):.4f}"
-        else:
-            print("Исторические данные недоступны для этой пары.")
-            
-    except Exception as e:
-        print(f"Ошибка при работе с API: {e}")
-
+    # 5. Возвращаем всё, что требует exchange_rates.html
     return {
         "items": items,
         "selected_base": selected_base,
         "selected_target": selected_target,
         "selected_period": selected_period,
-        "current_rate": current_rate,
-        "high_rate": high_rate,
-        "low_rate": low_rate,
+        "is_rtl": is_rtl,
+        "dashboard": dashboard, 
         "chart_data": chart_data
     }
