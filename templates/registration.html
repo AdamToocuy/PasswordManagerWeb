@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Регистрация</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 </head>
-  <nav class="navbar navbar-expand-lg bg-body-tertiary">
+<body>
+    <!-- Навигационное меню должно быть внутри тега body -->
+    <nav class="navbar navbar-expand-lg bg-body-tertiary">
       <div class="container-fluid">
         <a class="navbar-brand" href="#">ExchangeRate</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
@@ -18,49 +19,44 @@
             <li class="nav-item"><a class="nav-link" href="/index.html">Конвертер валют</a></li>
             <li class="nav-item"><a class="nav-link active fw-semibold" href="/exchange.html">Курс валют</a></li>
             <li class="nav-item"><a class="nav-link" href="#">Банки</a></li>
-            <li class="nav-item"><a class="nav-link" href="/singin.html">Регистрация</a></li>
+            <li class="nav-item"><a class="nav-link" href="/singin.html">Вход</a></li>
           </ul>
         </div>
       </div>
     </nav>
-<body>
-<div class="container mt-4">
 
-  <label for="exampleInputEmail1" class="form-label">Email address</label>
-      <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
-      <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
-    </div>
-    
-    <label for="exampleInputPassword1" class="form-label">Password</label>
-    <input type="password" class="form-control" id="exampleInputPassword1">
-    </div>
+    <div class="container mt-4">
+        <h2>Создание аккаунта</h2>
+        <br>
+        
+        <!-- Все поля должны быть обернуты в тег form -->
+        <form>
+            <!-- Поле ввода Email (такое же как в signin.html) -->
+            <div class="mb-3">
+                <label for="exampleInputEmail1" class="form-label">Email address</label>
+                <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+                <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+            </div>
+            
+            <!-- Поле ввода Пароля -->
+            <div class="mb-3">
+                <label for="exampleInputPassword1" class="form-label">Password</label>
+                <input type="password" class="form-control" id="exampleInputPassword1">
+            </div>
 
-    <div class="mb-3">
-    <label for="basic-url" class="form-label">Your vanity URL</label>
-    <div class="input-group">
-        <span class="input-group-text" id="basic-addon3">https://example.com/users/</span>
-        <input type="text" class="form-control" id="basic-url" aria-describedby="basic-addon3 basic-addon4">
-    </div>
-    <div class="form-text" id="basic-addon4">Example help text goes outside the input group.</div>
-    </div>
+            <!-- Второе поле ввода Пароля (для подтверждения) -->
+            <div class="mb-3">
+                <label for="exampleInputPassword2" class="form-label">Confirm Password</label>
+                <input type="password" class="form-control" id="exampleInputPassword2">
+            </div>
 
-    <div class="input-group mb-3">
-    <span class="input-group-text">$</span>
-    <input type="text" class="form-control" aria-label="Amount (to the nearest dollar)">
-    <span class="input-group-text">.00</span>
-    </div>
+            <!-- Синяя кнопка Submit -->
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+        <li class="nav-item"><a class="nav-link" href="/singin.html">Уже есть аккаунт? Авторизуйтесь.</a></li>
 
-    <div class="input-group mb-3">
-    <input type="text" class="form-control" placeholder="Username" aria-label="Username">
-    <span class="input-group-text">@</span>
-    <input type="text" class="form-control" placeholder="Server" aria-label="Server">
-    </div>
-
-    <div class="input-group">
-    <span class="input-group-text">With textarea</span>
-    <textarea class="form-control" aria-label="With textarea"></textarea>
-    </div>
-    </div>
+    <!-- Скрипты Bootstrap -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js" integrity="sha384-G/EV+4j2dNv+tEPo3++6LCgdCROaejBqfUeNjuKAiuXbjrxilcCdDz6ZAVfHWe1Y" crossorigin="anonymous"></script></body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js" integrity="sha384-G/EV+4j2dNv+tEPo3++6LCgdCROaejBqfUeNjuKAiuXbjrxilcCdDz6ZAVfHWe1Y" crossorigin="anonymous"></script>
+</body>
 </html>

@@ -28,6 +28,9 @@ def exchange_page():
 @app.route('/singin.html', methods=['GET', 'POST'])
 def singin_form():
     return render_template('singin.html')
+@app.route('/registration.html', methods=['GET', 'POST'])
+def registration_form():
+    return render_template('registration.html')
 
 if __name__ == '__main__':
     print("=== Запуск единого сервера курсов валют ===")
