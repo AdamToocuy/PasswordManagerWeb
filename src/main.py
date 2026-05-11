@@ -5,6 +5,8 @@ from flask import Flask, render_template
 from converter import process_converter
 from exchange_rates import process_exchange_dashboard
 from get_exchange import get_currency_data
+from data import db_session
+
 
 # Создаем приложение
 app = Flask(__name__, template_folder="../templates")
@@ -30,4 +32,6 @@ def singin_form():
 if __name__ == '__main__':
     print("=== Запуск единого сервера курсов валют ===")
     print("Адрес: http://127.0.0.1:8080")
+    db_session.global_init("db/users.db")
     app.run(port=8080, host='127.0.0.1', debug=True)
+    
