@@ -12,7 +12,7 @@ from signin import process_signin
 
 # Создаем приложение
 app = Flask(__name__, template_folder="../templates")
-app.config['SECRET_KEY'] = 'kakoy_nibud_ochen_sekretny_kluch'
+app.config['SECRET_KEY'] = '4321345544871647585'
 
 @app.route('/signin.html', methods=['GET', 'POST'])
 def signin():
@@ -72,7 +72,6 @@ def registration():
 
     return render_template('registration.html')
 
-# --- НОВЫЙ МАРШРУТ: ПРОФИЛЬ ---
 @app.route('/profile')
 def profile():
     # Проверяем, есть ли ID пользователя в сессии (авторизован ли он)
@@ -90,7 +89,6 @@ def profile():
     # Если пользователя в сессии нет (не авторизован) - передаем флаг False
     return render_template('profile.html', is_authenticated=False)
 
-# --- НОВЫЙ МАРШРУТ: ВЫХОД ИЗ АККАУНТА ---
 @app.route('/logout')
 def logout():
     # Удаляем пользователя из сессии браузера
