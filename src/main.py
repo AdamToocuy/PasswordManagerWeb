@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, flash, session
 
-# Импортируем логику из созданных вами файлов
+from data.users import User
 from converter import process_converter
 from exchange_rates import process_exchange_dashboard
 from get_exchange import get_currency_data
@@ -26,10 +26,9 @@ def signin():
         flash(message, category)
 
         if success:
-            # Осуществляем вход: записываем ID пользователя в сессию браузера!
+            # Осуществляем вход: записываем ID пользователя в сессию браузера
             session['user_id'] = user_id
             
-            # Перенаправляем на главную страницу (или куда тебе нужно)
             return redirect('/index.html') 
         else:
             # Ошибка: возвращаем на страницу входа
@@ -55,26 +54,49 @@ def exchange_page():
 @app.route('/registration.html', methods=['GET', 'POST'])
 def registration():
     if request.method == 'POST':
-        # 1. Получить значения из окна ввода
+        # Получаем юзернейм из формы
+        username = request.form.get('username')
         email = request.form.get('email')
         password = request.form.get('password')
         password_confirm = request.form.get('password_confirm')
 
-        # Вызываем алгоритм из отдельного файла
-        success, message, category = process_registration(email, password, password_confirm)
+        # Передаем username в логику
+        success, message, category = process_registration(username, email, password, password_confirm)
         
-        # Показываем сообщение (ошибку или успех)
         flash(message, category)
 
-        # Если регистрация успешна - перенаправляем на вход
         if success:
             return redirect('/signin.html')
-        # Если ошибка - возвращаем пользователя на страницу регистрации
         else:
             return render_template('registration.html')
 
-    # GET-запрос (просто открытие страницы)
     return render_template('registration.html')
+
+# --- НОВЫЙ МАРШРУТ: ПРОФИЛЬ ---
+@app.route('/profile')
+def profile():
+    # Проверяем, есть ли ID пользователя в сессии (авторизован ли он)
+    user_id = session.get('user_id')
+    
+    if user_id:
+        # Если авторизован - ищем его в БД
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).get(user_id)
+        
+        if user:
+            # Передаем флаг True и данные пользователя
+            return render_template('profile.html', is_authenticated=True, user=user)
+            
+    # Если пользователя в сессии нет (не авторизован) - передаем флаг False
+    return render_template('profile.html', is_authenticated=False)
+
+# --- НОВЫЙ МАРШРУТ: ВЫХОД ИЗ АККАУНТА ---
+@app.route('/logout')
+def logout():
+    # Удаляем пользователя из сессии браузера
+    session.pop('user_id', None)
+    flash('Вы успешно вышли из аккаунта', 'info')
+    return redirect('/signin.html')
 
 def main():
     db_session.global_init("db/users.db")
