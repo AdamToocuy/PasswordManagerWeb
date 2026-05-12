@@ -1,5 +1,4 @@
 from flask import request
-import requests
 from get_exchange import calculate_exchange
 
 def process_converter():
