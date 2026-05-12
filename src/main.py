@@ -100,7 +100,7 @@ def logout():
 
 def main():
     db_session.global_init("db/users.db")
-    app.run(debug=True)
+    app.run(host='127.0.0.1', port=8080, debug=True)
 
 if __name__ == '__main__':
     main()    
