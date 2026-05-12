@@ -73,14 +73,6 @@
           <option value="5y"   {% if selected_period == '5y'   %}selected{% endif %}>5 лет</option>
           <option value="10y"  {% if selected_period == '10y'  %}selected{% endif %}>10 лет</option>
         </select>
-
-        <!-- Чекбокс ручного включения RTL -->
-        <div class="input-group-text">
-          <input class="form-check-input mt-0 me-1" type="checkbox" name="rtl" value="1"
-            {% if is_rtl %}checked{% endif %} onchange="this.form.submit()" id="rtlCheck">
-          <label class="form-check-label" for="rtlCheck">RTL</label>
-        </div>
-
       </div>
     </form>
 

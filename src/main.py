@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, flash
+from flask import Flask, render_template, request, redirect, flash, session
 
 # Импортируем логику из созданных вами файлов
 from converter import process_converter
@@ -6,12 +6,36 @@ from exchange_rates import process_exchange_dashboard
 from get_exchange import get_currency_data
 from data import db_session
 from registration import process_registration 
+from signin import process_signin 
+
 
 
 # Создаем приложение
 app = Flask(__name__, template_folder="../templates")
 app.config['SECRET_KEY'] = 'kakoy_nibud_ochen_sekretny_kluch'
 
+@app.route('/signin.html', methods=['GET', 'POST'])
+def signin():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        # Запускаем наш алгоритм
+        success, message, category, user_id = process_signin(email, password)
+        
+        flash(message, category)
+
+        if success:
+            # Осуществляем вход: записываем ID пользователя в сессию браузера!
+            session['user_id'] = user_id
+            
+            # Перенаправляем на главную страницу (или куда тебе нужно)
+            return redirect('/index.html') 
+        else:
+            # Ошибка: возвращаем на страницу входа
+            return render_template('signin.html')
+
+    return render_template('signin.html')
 
 @app.route('/index.html', methods=['GET', 'POST'])
 @app.route('/', methods=['GET', 'POST'])
@@ -51,10 +75,6 @@ def registration():
 
     # GET-запрос (просто открытие страницы)
     return render_template('registration.html')
-
-@app.route('/signin.html')
-def signin():
-    return render_template('signin.html')
 
 def main():
     db_session.global_init("db/users.db")
