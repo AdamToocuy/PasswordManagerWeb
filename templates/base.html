@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<!-- Добавлена логика RTL для всех страниц сайта -->
+<html lang="ru" dir="{{ 'rtl' if is_rtl else 'ltr' }}" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ExchangeRate{% endblock %}</title>
+
+    <!-- Умное подключение Bootstrap (RTL или обычный) -->
+    {% if is_rtl %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    {% else %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    {% endif %}
+
+    <!-- Сюда дочерние страницы смогут добавлять свои скрипты в шапку (например, ApexCharts) -->
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- ЕДИНАЯ ШАПКА -->
+    <nav class="navbar navbar-expand-lg bg-body-tertiary">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">ExchangeRate</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link" href="/index.html">Конвертер валют</a></li>
+            <li class="nav-item"><a class="nav-link" href="/exchange.html">Курс валют</a></li>
+            <li class="nav-item"><a class="nav-link" href="#">Банки</a></li>
+            <li class="nav-item"><a class="nav-link" href="/signin.html">Вход</a></li>
+          </ul>
+          <!-- Бейдж RTL-режима -->
+          {% if is_rtl %}
+          <span class="badge bg-secondary me-2">RTL</span>
+          {% endif %}
+        </div>
+      </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Блок вывода системных сообщений/ошибок -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- СЮДА БУДЕТ ВСТАВЛЯТЬСЯ КОНТЕНТ СТРАНИЦ -->
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <!-- Основной скрипт Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    
+    <!-- Сюда дочерние страницы смогут добавлять свои JS скрипты в конец тела -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>

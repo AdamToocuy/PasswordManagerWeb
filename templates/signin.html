@@ -1,72 +1,33 @@
-<!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход в аккаунт</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg bg-body-tertiary">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="#">ExchangeRate</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <li class="nav-item"><a class="nav-link" href="/index.html">Конвертер валют</a></li>
-            <li class="nav-item"><a class="nav-link active fw-semibold" href="/exchange.html">Курс валют</a></li>
-            <li class="nav-item"><a class="nav-link" href="#">Банки</a></li>
-            <li class="nav-item"><a class="nav-link" href="/signin.html">Вход</a></li>
-          </ul>
+{% extends "base.html" %}
+
+{% block title %}Вход в аккаунт{% endblock %}
+
+{% block content %}
+    <h2>Авторизация</h2>
+    <br>
+
+    <form method="POST">
+        <div class="mb-3">
+            <label for="exampleInputEmail1" class="form-label">Email address</label>
+            <input type="email" class="form-control" name="email" id="exampleInputEmail1" required>
         </div>
-      </div>
-    </nav>
+        
+        <div class="mb-3">
+            <label for="exampleInputPassword1" class="form-label">Password</label>
+            <input type="password" class="form-control" name="password" id="exampleInputPassword1" required>
+        </div>
+        
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="exampleCheck1">
+            <label class="form-check-label" for="exampleCheck1">Запомнить меня</label>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Войти</button>
+    </form>
 
-    <div class="container mt-4">
-        <h2>Авторизация</h2>
-        <br>
-
-        <!-- БЛОК ВЫВОДА ОШИБОК -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div class="alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
-
-        <!-- Добавлен method="POST" -->
-        <form method="POST">
-            <div class="mb-3">
-                <label for="exampleInputEmail1" class="form-label">Email address</label>
-                <!-- Добавлен name="email" -->
-                <input type="email" class="form-control" name="email" id="exampleInputEmail1" aria-describedby="emailHelp" required>
-                <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
-            </div>
-            
-            <div class="mb-3">
-                <label for="exampleInputPassword1" class="form-label">Password</label>
-                <!-- Добавлен name="password" -->
-                <input type="password" class="form-control" name="password" id="exampleInputPassword1" required>
-            </div>
-            
-            <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" id="exampleCheck1">
-                <label class="form-check-label" for="exampleCheck1">Запомнить меня</label>
-            </div>
-            
-            <button type="submit" class="btn btn-primary">Войти</button>
-        </form>
-
-        <ul class="nav mt-4">
-            <li class="nav-item">
-                <a class="nav-link px-0" href="/registration.html">Нет аккаунта? Создай его.</a>
-            </li>
-        </ul>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-</body>
-</html>
+    <ul class="nav mt-4">
+        <li class="nav-item">
+            <a class="nav-link px-0" href="/registration.html">Нет аккаунта? Создай его.</a>
+        </li>
+    </ul>
+{% endblock %}

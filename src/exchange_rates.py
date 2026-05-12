@@ -2,9 +2,24 @@ from flask import request
 import requests
 from datetime import datetime, timedelta
 import random
+from functools import lru_cache # Импортируем инструмент для кэширования
 
 # Импортируем функции из вашего файла get_exchange.py
 from get_exchange import get_currency_codes, get_currency_data
+
+# === 1. АСИНХРОННОСТЬ / КЭШИРОВАНИЕ ===
+# maxsize=128 означает, что сервер запомнит последние 128 графиков.
+# При обновлении страницы запрос к API не делается, данные отдаются мгновенно!
+@lru_cache(maxsize=128)
+def fetch_frankfurter_history(base, target, start_str, end_str):
+    try:
+        url_hist = f"https://api.frankfurter.app/{start_str}..{end_str}?from={base}&to={target}"
+        resp_hist = requests.get(url_hist, timeout=5)
+        if resp_hist.status_code == 200:
+            return resp_hist.json().get("rates", {})
+    except Exception as e:
+        print(f"Ошибка Frankfurter API: {e}")
+    return {}
 
 def process_exchange_dashboard():
     """Готовит данные для дашборда с курсами и историей."""
@@ -24,7 +39,7 @@ def process_exchange_dashboard():
     low_rate = "-"
     chart_data =[]
 
-    # 3. ВСЕГДА получаем настоящий текущий курс (работает для 160+ валют)
+    # 3. ВСЕГДА получаем настоящий текущий курс
     rates = get_currency_data(selected_base)
     rate = rates.get(selected_target)
     if rate:
@@ -45,21 +60,24 @@ def process_exchange_dashboard():
         start_str = start_date.strftime('%Y-%m-%d')
         end_str = end_date.strftime('%Y-%m-%d')
 
-        # Флаг успешного получения реальной истории
         real_data_success = False
 
         if current_rate_float > 0:
-            # Пытаемся получить реальную историю от Европейского ЦБ
-            try:
-                url_hist = f"https://api.frankfurter.app/{start_str}..{end_str}?from={selected_base}&to={selected_target}"
-                resp_hist = requests.get(url_hist, timeout=5)
+            # Вызываем функцию (если данные уже запрашивали, она отдаст их из кэша)
+            rates_history = fetch_frankfurter_history(selected_base, selected_target, start_str, end_str)
+            
+            if rates_history:
+                # === 2. РЕШЕНИЕ ПРОБЛЕМЫ 2022 ГОДА ===
+                last_date_str = max(rates_history.keys())
+                last_date_obj = datetime.strptime(last_date_str, "%Y-%m-%d")
                 
-                if resp_hist.status_code == 200:
-                    rates_history = resp_hist.json().get("rates", {})
+                # Проверяем: если последние данные старше 14 дней от сегодня 
+                # (как RUB, зависший в 2022), мы их отбрасываем!
+                if (end_date - last_date_obj).days <= 14:
                     vals =[]
-                    
-                    for date_key, rate_dict in rates_history.items():
-                        hist_val = rate_dict.get(selected_target)
+                    # Данные актуальны, парсим их
+                    for date_key in sorted(rates_history.keys()):
+                        hist_val = rates_history[date_key].get(selected_target)
                         if hist_val:
                             dt_obj = datetime.strptime(date_key, "%Y-%m-%d")
                             ts = int(dt_obj.timestamp() * 1000)
@@ -70,37 +88,31 @@ def process_exchange_dashboard():
                         high_rate = f"{max(vals):.4f}"
                         low_rate = f"{min(vals):.4f}"
                         real_data_success = True
-            except Exception as e:
-                print(f"Ошибка Frankfurter API: {e}")
 
-            # 4. УМНАЯ ЗАГЛУШКА: Если Frankfurter не знает эту валюту (RUB, KZT и тд)
-            # Генерируем график математически на базе настоящего текущего курса
-            if not real_data_success:
-                vals =[]
-                now_ts = int(end_date.timestamp() * 1000)
-                step_ms = 24 * 60 * 60 * 1000 # 1 день в миллисекундах
-                
-                # Ограничиваем кол-во точек для графиков за 5/10 лет
-                points_count = min(days_to_subtract, 300) 
-                day_step = max(1, days_to_subtract // points_count)
+        # 4. УМНАЯ ЗАГЛУШКА: Сработает, если API не знает валюту или данные устарели (2022 год)
+        if not real_data_success:
+            vals =[]
+            now_ts = int(end_date.timestamp() * 1000)
+            step_ms = 24 * 60 * 60 * 1000 # 1 день в миллисекундах
+            
+            points_count = min(days_to_subtract, 300) 
+            day_step = max(1, days_to_subtract // points_count)
 
-                mock_rate = current_rate_float
-                reversed_data =[]
-                
-                # Строим график "в прошлое" от текущей настоящей цены
-                for i in range(points_count + 1):
-                    ts = now_ts - (i * day_step * step_ms)
-                    reversed_data.append([ts, round(mock_rate, 4)])
-                    vals.append(mock_rate)
-                    # Случайное колебание от -0.5% до +0.5% за день
-                    mock_rate = mock_rate * (1 + random.uniform(-0.005, 0.005))
-                
-                # Разворачиваем данные, чтобы время шло слева направо
-                chart_data = list(reversed(reversed_data))
-                
-                if vals:
-                    high_rate = f"{max(vals):.4f}"
-                    low_rate = f"{min(vals):.4f}"
+            mock_rate = current_rate_float
+            reversed_data =[]
+            
+            for i in range(points_count + 1):
+                ts = now_ts - (i * day_step * step_ms)
+                reversed_data.append([ts, round(mock_rate, 4)])
+                vals.append(mock_rate)
+                # Случайное колебание от -0.5% до +0.5% за день
+                mock_rate = mock_rate * (1 + random.uniform(-0.005, 0.005))
+            
+            chart_data = list(reversed(reversed_data))
+            
+            if vals:
+                high_rate = f"{max(vals):.4f}"
+                low_rate = f"{min(vals):.4f}"
 
     # 5. Собираем дашборд
     dashboard = {
