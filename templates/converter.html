@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Конвертер валют — ExchangeRate{% endblock %}
+
+{% block content %}
+  <form method="POST">
+    <div class="input-group mb-3">
+      <button type="submit" class="btn btn-outline-secondary">Перевести</button>
+      
+      <select name="from_currency" class="btn btn-outline-secondary">
+        {% for item in items %}
+        <option value="{{ item }}" {% if item == selected_from %}selected{% endif %}>
+          {{ item }}
+        </option>
+        {% endfor %}
+      </select>
+
+      <input type="number" step="0.01" name="source_amount" class="form-control" 
+             value="{{ request.form.get('source_amount', '') }}" placeholder="Сумма" required>
+    </div>
+
+    <div class="input-group">
+      <input type="text" class="form-control" value="{{ result }}" readonly placeholder="Результат">
+      
+      <select name="to_currency" class="btn btn-outline-secondary">
+        {% for item in items %}
+        <option value="{{ item }}" {% if item == selected_to %}selected{% endif %}>
+          {{ item }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+  </form>
+
+  <div class="scrollspy-example bg-body-tertiary p-3 rounded-2 mt-3" tabindex="0">
+    <!-- Пустой блок как в оригинале -->
+  </div>
+{% endblock %}

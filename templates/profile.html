@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль — ExchangeRate{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 text-center">
+        
+        <!-- ЕСЛИ ПОЛЬЗОВАТЕЛЬ АВТОРИЗОВАН -->
+        {% if is_authenticated %}
+            <div class="card bg-body-tertiary shadow-sm">
+                <div class="card-body py-5">
+                    <!-- Иконка профиля (просто кружочек из Bootstrap) -->
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px; font-size: 2rem;">
+                        {{ user.name[0] | upper }} <!-- Первая буква имени -->
+                    </div>
+                    
+                    <h2 class="card-title fw-bold mb-1">{{ user.name }}</h2>
+                    <p class="text-muted mb-4">{{ user.email }}</p>
+                    
+                    <hr class="mb-4">
+                    
+                    <!-- Кнопка Выйти ведет на маршрут /logout -->
+                    <a href="/logout" class="btn btn-outline-danger px-4">Выйти из аккаунта</a>
+                </div>
+            </div>
+
+        <!-- ЕСЛИ ПОЛЬЗОВАТЕЛЬ НЕ АВТОРИЗОВАН -->
+        {% else %}
+            <div class="py-5">
+                <h1 class="display-6 fw-bold mb-4">Вы не авторизованы</h1>
+                <p class="text-muted mb-4">Чтобы посмотреть свой профиль, войдите в систему или создайте новый аккаунт.</p>
+                <!-- Кнопка ведет на авторизацию -->
+                <a href="/signin.html" class="btn btn-primary btn-lg px-5">Авторизоваться</a>
+            </div>
+        {% endif %}
+        
+    </div>
+</div>
+{% endblock %}

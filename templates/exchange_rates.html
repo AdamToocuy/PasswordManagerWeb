@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Курс валют — ExchangeRate{% endblock %}
+
+{% block head %}
+  <!-- Подключаем скрипт графиков только для этой страницы -->
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+{% endblock %}
+
+{% block content %}
+  <!-- Фильтры: валюты + период -->
+  <form method="GET" action="">
+    <div class="input-group mb-3">
+      <span class="input-group-text">Базовая</span>
+      <select name="base_currency" class="form-select" onchange="this.form.submit()">
+        {% for item in items %}
+        <option value="{{ item }}" {% if item == selected_base %}selected{% endif %}>{{ item }}</option>
+        {% endfor %}
+      </select>
+
+      <span class="input-group-text">Целевая</span>
+      <select name="target_currency" class="form-select" onchange="this.form.submit()">
+        {% for item in items %}
+        <option value="{{ item }}" {% if item == selected_target %}selected{% endif %}>{{ item }}</option>
+        {% endfor %}
+      </select>
+
+      <span class="input-group-text">Период</span>
+      <select name="period" class="form-select" onchange="this.form.submit()">
+        <option value="1mo"  {% if selected_period == '1mo'  %}selected{% endif %}>1 месяц</option>
+        <option value="6mo"  {% if selected_period == '6mo'  %}selected{% endif %}>6 месяцев</option>
+        <option value="1y"   {% if selected_period == '1y'   %}selected{% endif %}>1 год</option>
+        <option value="5y"   {% if selected_period == '5y'   %}selected{% endif %}>5 лет</option>
+        <option value="10y"  {% if selected_period == '10y'  %}selected{% endif %}>10 лет</option>
+      </select>
+    </div>
+  </form>
+
+  <!-- Карточки-метрики -->
+  <div class="row g-3 mb-4">
+    {% if dashboard is defined and dashboard.cards %}
+      {% for card in dashboard.cards %}
+      <div class="col-md-4">
+        <div class="bg-body-tertiary rounded-2 p-3 h-100 d-flex flex-column justify-content-center">
+          <div class="text-body-secondary small mb-2">{{ card.title }}</div>
+          <div class="d-flex align-items-center justify-content-between">
+            <div class="fs-3 fw-semibold {{ card.color }}">{{ card.value }}</div>
+            {% if card.badge %}
+              <span class="badge {{ card.badge_color }}">{{ card.badge }}</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="col-12 text-muted">Нет данных</div>
+    {% endif %}
+  </div>
+
+  <!-- Контейнер для графика -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="bg-body-tertiary rounded-2 p-3">
+        <div id="chart"></div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const chartData = {{ chart_data | default('[]') | tojson }};
+      const isRtl = {{ 'true' if is_rtl else 'false' }};
+
+      const chartElement = document.querySelector("#chart");
+      
+      if (chartElement) {
+        new ApexCharts(chartElement, {
+          series: [{ name: 'Курс', data: chartData }],
+          chart: { type: 'area', height: 320, toolbar: { show: true }, background: 'transparent' },
+          colors:['#38bdf8'],
+          fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops:[0, 100] } },
+          dataLabels: { enabled: false },
+          stroke: { curve: 'smooth', width: 2 },
+          xaxis: { type: 'datetime', labels: { style: { colors: '#94a3b8' } }, axisBorder: { show: false }, axisTicks: { show: false }, tooltip: { enabled: false } },
+          yaxis: { opposite: isRtl, labels: { style: { colors: '#94a3b8' }, formatter: v => v.toFixed(4) } },
+          tooltip: { theme: 'dark', x: { format: 'dd MMM yyyy' } },
+          grid: { borderColor: '#334155', strokeDashArray: 4 },
+          theme: { mode: 'dark' }
+        }).render();
+      }
+    });
+  </script>
+{% endblock %}

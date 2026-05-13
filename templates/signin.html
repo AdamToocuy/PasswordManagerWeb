@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Вход в аккаунт{% endblock %}
+
+{% block content %}
+    <h2>Авторизация</h2>
+    <br>
+
+    <form method="POST">
+        <div class="mb-3">
+            <label for="exampleInputEmail1" class="form-label">Email address</label>
+            <input type="email" class="form-control" name="email" id="exampleInputEmail1" required>
+        </div>
+        
+        <div class="mb-3">
+            <label for="exampleInputPassword1" class="form-label">Password</label>
+            <input type="password" class="form-control" name="password" id="exampleInputPassword1" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Войти</button>
+    </form>
+
+    <ul class="nav mt-4">
+        <li class="nav-item">
+            <a class="nav-link px-0" href="/registration.html">Нет аккаунта? Создай его.</a>
+        </li>
+    </ul>
+{% endblock %}
